@@ -55,6 +55,7 @@ def main(page: ft.Page):
     page.title = "ET / MPH / HP Calculator (1/4 & 1/8 mile)"
     page.padding = 20
     page.vertical_alignment = ft.MainAxisAlignment.START
+    page.scroll = ft.ScrollMode.AUTO
     
     # Distance selector (1/4 or 1/8)
     distance_dd = ft.Dropdown(
