@@ -1,0 +1,4 @@
+# Local tool directories
+.claude/
+.serena/
+.venv/
