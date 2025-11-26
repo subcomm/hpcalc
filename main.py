@@ -56,6 +56,15 @@ def main(page: ft.Page):
     page.padding = 20
     page.vertical_alignment = ft.MainAxisAlignment.START
 
+    # Icon
+    
+    image = ft.Image(
+        src="images/engine.png",
+        width=100,
+        height=100,
+        fit=ft.ImageFit.CONTAIN,
+        )
+
     # Distance selector (1/4 or 1/8)
     distance_dd = ft.Dropdown(
         label="Distance for ET & MPH inputs",
