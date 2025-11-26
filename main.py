@@ -55,16 +55,7 @@ def main(page: ft.Page):
     page.title = "ET / MPH / HP Calculator (1/4 & 1/8 mile)"
     page.padding = 20
     page.vertical_alignment = ft.MainAxisAlignment.START
-
-    # Icon
     
-    image = ft.Image(
-        src="images/engine.png",
-        width=100,
-        height=100,
-        fit=ft.ImageFit.CONTAIN,
-        )
-
     # Distance selector (1/4 or 1/8)
     distance_dd = ft.Dropdown(
         label="Distance for ET & MPH inputs",
@@ -246,6 +237,7 @@ def main(page: ft.Page):
 
     # Layout
     page.add(
+        ft.Image(src="/engine.png", width=100, height=100),
         ft.Text("Quarter- & Eighth-Mile ET / MPH / HP Calculator", size=20, weight=ft.FontWeight.BOLD),
         ft.Text(
             "1/4-mile formulas; 1/8-mile values are approximate conversions.",
@@ -265,4 +257,4 @@ def main(page: ft.Page):
 if __name__ == "__main__":
     # For browser UI, use: ft.app(target=main, view=ft.WEB_BROWSER)
     # ft.app(target=main)
-    ft.app(target=main, view=ft.WEB_BROWSER)
+    ft.app(target=main, view=ft.WEB_BROWSER, assets_dir="assets")
