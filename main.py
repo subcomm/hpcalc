@@ -31,6 +31,34 @@ def kw_to_hp(kw):
     return kw / 0.7457
 
 
+# ---- Torque converter slip calculation ----
+
+def calculate_trans_rpm_from_mph(mph, tire_diameter, rear_gear_ratio):
+    """Calculate transmission output shaft RPM from vehicle speed.
+    mph: vehicle speed in miles per hour
+    tire_diameter: tire diameter in inches
+    rear_gear_ratio: rear end gear ratio (e.g., 3.73)
+    """
+    # Formula: RPM = (MPH * gear_ratio * 336) / tire_diameter
+    # 336 is a constant: (5280 feet/mile * 12 inches/foot) / (60 min/hour * π)
+    trans_rpm = (mph * rear_gear_ratio * 336) / tire_diameter
+    return trans_rpm
+
+def calculate_tc_slip(engine_rpm, trans_output_rpm, trans_gear_ratio=1.0):
+    """Calculate torque converter slip percentage.
+    engine_rpm: engine RPM
+    trans_output_rpm: transmission output shaft RPM (calculated from vehicle speed)
+    trans_gear_ratio: transmission gear ratio (1.0 for 1:1 high gear, 0.7 for overdrive, etc.)
+    """
+    if engine_rpm == 0:
+        return 0, 0
+    # Transmission input RPM = output RPM / gear ratio
+    trans_input_rpm = trans_output_rpm / trans_gear_ratio
+    slip_rpm = engine_rpm - trans_input_rpm
+    slip_percent = (slip_rpm / engine_rpm) * 100
+    return slip_percent, slip_rpm
+
+
 # ---- Simple 1/4 <-> 1/8 conversion helpers (approximate) ----
 # These are common ballpark ratios, not exact physics.
 ET_1_8_FROM_1_4_FACTOR = 0.66   # ET_1/8 ≈ 0.66 * ET_1/4
@@ -92,8 +120,50 @@ def main(page: ft.Page):
         keyboard_type=ft.KeyboardType.NUMBER,
     )
 
+    # Torque converter slip calculator fields
+    tc_distance_dd = ft.Dropdown(
+        label="Distance for TC calculation",
+        options=[
+            ft.dropdown.Option("1/4 mile"),
+            ft.dropdown.Option("1/8 mile"),
+        ],
+        value="1/4 mile",
+        width=200,
+    )
+
+    tc_engine_rpm_tf = ft.TextField(
+        label="Engine RPM",
+        width=200,
+        keyboard_type=ft.KeyboardType.NUMBER,
+    )
+    tc_mph_tf = ft.TextField(
+        label="MPH (trap speed)",
+        width=200,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        helper_text="Uses distance selected above",
+    )
+    tc_tire_diameter_tf = ft.TextField(
+        label="Tire Diameter (inches)",
+        width=200,
+        keyboard_type=ft.KeyboardType.NUMBER,
+    )
+    tc_rear_gear_tf = ft.TextField(
+        label="Rear Gear Ratio",
+        width=200,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        value="3.73",
+    )
+    tc_trans_gear_tf = ft.TextField(
+        label="Trans Gear Ratio",
+        width=200,
+        keyboard_type=ft.KeyboardType.NUMBER,
+        value="1.0",
+        helper_text="1.0 for 1:1, 0.7 for OD, etc.",
+    )
+
     # Output text
     result_text = ft.Text("", selectable=True, size=14)
+    tc_result_text = ft.Text("", selectable=True, size=14)
 
     def show_error(msg: str):
         page.snack_bar = ft.SnackBar(content=ft.Text(msg))
@@ -231,10 +301,45 @@ def main(page: ft.Page):
         except ValueError as ex:
             show_error(str(ex))
 
+    def on_calculate_tc_slip_click(e):
+        try:
+            engine_rpm = parse_float(tc_engine_rpm_tf, "Engine RPM")
+            mph_input = parse_float(tc_mph_tf, "MPH")
+            tire_diameter = parse_float(tc_tire_diameter_tf, "Tire Diameter")
+            rear_gear = parse_float(tc_rear_gear_tf, "Rear Gear Ratio")
+            trans_gear = parse_float(tc_trans_gear_tf, "Trans Gear Ratio")
+
+            # Determine which distance is selected
+            tc_using_quarter = tc_distance_dd.value == "1/4 mile"
+            distance_label = "1/4-mile" if tc_using_quarter else "1/8-mile"
+
+            # Calculate transmission output RPM from vehicle speed
+            trans_output_rpm = calculate_trans_rpm_from_mph(mph_input, tire_diameter, rear_gear)
+
+            # Calculate TC slip
+            slip_percent, slip_rpm = calculate_tc_slip(engine_rpm, trans_output_rpm, trans_gear)
+
+            # Calculate transmission input RPM
+            trans_input_rpm = trans_output_rpm / trans_gear
+
+            tc_result_text.value = (
+                f"Torque Converter Slip ({distance_label}):\n\n"
+                f"  MPH: {mph_input:.1f}\n"
+                f"  Trans Output RPM: {trans_output_rpm:.0f}\n"
+                f"  Trans Input RPM: {trans_input_rpm:.0f}\n"
+                f"  Engine RPM: {engine_rpm:.0f}\n"
+                f"  Slip: {slip_rpm:.0f} RPM ({slip_percent:.1f}%)\n"
+            )
+            page.update()
+
+        except ValueError as ex:
+            show_error(str(ex))
+
     # Buttons
     from_et_btn = ft.ElevatedButton("Compute from ET", on_click=on_from_et_click)
     from_mph_btn = ft.ElevatedButton("Compute from MPH", on_click=on_from_mph_click)
     from_hp_btn = ft.ElevatedButton("Compute from HP", on_click=on_from_hp_click)
+    calc_tc_slip_btn = ft.ElevatedButton("Calculate TC Slip", on_click=on_calculate_tc_slip_click)
 
     # Layout
     page.add(
@@ -252,6 +357,14 @@ def main(page: ft.Page):
         ft.Row([from_et_btn, from_mph_btn, from_hp_btn], wrap=True, spacing=10),
         ft.Divider(),
         result_text,
+        ft.Divider(),
+        ft.Text("Torque Converter Slip Calculator", size=18, weight=ft.FontWeight.BOLD),
+        tc_distance_dd,
+        ft.Row([tc_engine_rpm_tf, tc_mph_tf], wrap=True),
+        ft.Row([tc_tire_diameter_tf, tc_rear_gear_tf, tc_trans_gear_tf], wrap=True),
+        ft.Row([calc_tc_slip_btn]),
+        ft.Divider(),
+        tc_result_text,
     )
 
 
