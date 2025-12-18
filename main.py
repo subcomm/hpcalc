@@ -344,13 +344,12 @@ def main(page: ft.Page):
     # Layout
     page.add(
         ft.Image(src="/engine.png", width=100, height=100),
-        ft.Text("Quarter- & Eighth-Mile ET / MPH / HP Calculator", size=20, weight=ft.FontWeight.BOLD),
-        ft.Text(
-            "1/4-mile formulas; 1/8-mile values are approximate conversions.",
-            size=12,
-            italic=True,
-        ),
+        ft.Text("Subcom: Performance Calculators", size=20, weight=ft.FontWeight.BOLD),
         ft.Divider(),
+        ft.Text(
+            "1/4 & 1/8 Mile ET / MPH / HP Calculator",
+            size=18, weight=ft.FontWeight.BOLD
+        ),
         distance_dd,
         ft.Row([weight_tf]),
         ft.Row([et_tf, mph_tf, hp_tf], wrap=True),
