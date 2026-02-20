@@ -102,11 +102,19 @@ def main(page: ft.Page):
         width=200,
         keyboard_type=ft.KeyboardType.NUMBER,
     )
+    def on_et_blur(_):
+        if et_tf.value:
+            try:
+                et_tf.value = f"{float(et_tf.value):.3f}"
+            except ValueError:
+                pass
+
     et_tf = ft.TextField(
         label="ET (seconds)",
         width=200,
         keyboard_type=ft.KeyboardType.NUMBER,
         helper_text="Uses distance selected above",
+        on_blur=on_et_blur,
     )
     mph_tf = ft.TextField(
         label="Trap Speed (MPH)",
